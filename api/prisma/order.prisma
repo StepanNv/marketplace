@@ -1,0 +1,40 @@
+enum OrderStatus {
+  NEW
+  PROCESSING
+  SHIPPED
+  RECEIVED
+  CANCELED
+
+  @@map("order_status")
+}
+
+enum OrderCancellationActor {
+  BUYER
+  SELLER
+
+  @@map("order_cancellation_actor")
+}
+
+model Order {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyerId               String                  @map("buyer_id") @db.Uuid
+  sellerId              String                  @map("seller_id") @db.Uuid
+  productId             String                  @map("product_id") @db.Uuid
+  status                OrderStatus             @default(NEW)
+  productName           String                  @map("product_name")
+  unitPrice             Decimal                 @map("unit_price") @db.Decimal(12, 2)
+  quantity              Int
+  totalAmount           Decimal                 @map("total_amount") @db.Decimal(14, 2)
+  shippingRecipientName String                  @map("shipping_recipient_name")
+  shippingAddress       String                  @map("shipping_address")
+  canceledBy            OrderCancellationActor? @map("canceled_by")
+  cancellationReason    String?                 @map("cancellation_reason")
+  createdAt             DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  buyer   User    @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Restrict)
+  seller  User    @relation("SellerOrders", fields: [sellerId], references: [id], onDelete: Restrict)
+  product Product @relation(fields: [productId, sellerId], references: [id, sellerId], onDelete: Restrict, onUpdate: Restrict)
+
+  @@map("orders")
+}
